@@ -1,65 +1,85 @@
+import logging
 from flask import Flask
-from flask_restful import Resource, reqparse, Api
+from flask_restful import Api
+from cheroot.wsgi import Server as WSGIServer
+from api.util.dados import tasks, aircraft, aircraft_model, part_categories, parts, part_location, work_order, employees,external_employees, position, person,accesses
+from api.routes.select_route import Tasks, Aircraft, Aircraft_model, Part_categories, Parts, Part_location, Work_order, Employees,ExternalEmployees, Position,Person,Accesses
 
-app = Flask(__name__)
-api = Api(app)
-
-class OrdemServico:
-    def __init__(self, id, tarefas, pecas, data_inicio, data_termino, responsavel):
-        self.id = id
-        self.tarefas = tarefas
-        self.pecas = pecas
-        self.data_inicio = data_inicio
-        self.data_termino = data_termino
-        self.responsavel = responsavel
-
-ordens_servico = []
-ordens_servico.append(OrdemServico(1, ["Tarefa 1", "Tarefa 2"], ["Peça 1", "Peça 2"], "2023-04-01", "2023-04-05", "Responsável 1"))
-ordens_servico.append(OrdemServico(2, ["Tarefa 3", "Tarefa 4"], ["Peça 3", "Peça 4"], "2023-04-05", "2023-04-10", "Responsável 2"))
+APP = Flask(__name__)
+API = Api(APP)
+PORT = 8080
+SERVER = WSGIServer(('0.0.0.0', PORT), APP)
 
 
+API.add_resource(Tasks, '/tasks', '/tasks/<int:id>', resource_class_kwargs={
+    'table_name': tasks['table_name'],
+    'id_column': tasks['id_column'],
+    'columns': tasks['columns']
+})
+API.add_resource(Aircraft, '/aircraft', '/aircraft/<int:id>', resource_class_kwargs={
+    'table_name': aircraft['table_name'],
+    'id_column': aircraft['id_column'],
+    'columns': aircraft['columns']
+})
+API.add_resource(Aircraft_model, '/aircraft_model', '/aircraft_model/<int:id>', resource_class_kwargs={
+    'table_name': aircraft_model['table_name'],
+    'id_column': aircraft_model['id_column'],
+    'columns': aircraft_model['columns']
+})
+API.add_resource(Part_location, '/part_location', '/part_location/<int:id>', resource_class_kwargs={
+    'table_name': part_location['table_name'],
+    'id_column': part_location['id_column'],
+    'columns': part_location['columns']
+})
+API.add_resource(Part_categories, '/part_categories', '/part_categories/<int:id>', resource_class_kwargs={
+    'table_name': part_categories['table_name'],
+    'id_column': part_categories['id_column'],
+    'columns': part_categories['columns']
+})
 
-parser = reqparse.RequestParser()
-parser.add_argument('id', type=int)
-parser.add_argument('tarefas', type=list)
-parser.add_argument('pecas', type=list)
-parser.add_argument('data_inicio', type=str)
-parser.add_argument('data_termino', type=str)
-parser.add_argument('responsavel', type=str)
+API.add_resource(Parts, '/parts', '/parts/<int:id>', resource_class_kwargs={
+    'table_name': parts['table_name'],
+    'id_column': parts['id_column'],
+    'columns': parts['columns']
+})
+API.add_resource(Work_order, '/work_order', '/work_order/<int:id>', resource_class_kwargs={
+    'table_name': work_order['table_name'],
+    'id_column': work_order['id_column'],
+    'columns': work_order['columns']
+})
 
-class OrdemServicoResource(Resource):
-    def get(self, os_id):
-        for ordem_servico in ordens_servico:
-            if ordem_servico.id == os_id:
-                return ordem_servico.__dict__, 200
-        return "Ordem de serviço não encontrada", 404
+API.add_resource(Employees, '/employees', '/employees/<int:id>', resource_class_kwargs={
+    'table_name': employees['table_name'],
+    'id_column': employees['id_column'],
+    'columns': employees['columns']
+})
 
-    def post(self):
-        args = parser.parse_args()
-        ordem_servico = OrdemServico(args['id'], args['tarefas'], args['pecas'], args['data_inicio'], args['data_termino'], args['responsavel'])
-        ordens_servico.append(ordem_servico)
-        return ordem_servico.__dict__, 201
+API.add_resource(ExternalEmployees, '/external_employees', '/external_employees/<int:id>', resource_class_kwargs={
+    'table_name': external_employees['table_name'],
+    'id_column': external_employees['id_column'],
+    'columns': external_employees['columns']
+})
 
-    def put(self, os_id):
-        args = parser.parse_args()
-        for ordem_servico in ordens_servico:
-            if ordem_servico.id == os_id:
-                ordem_servico.tarefas = args['tarefas']
-                ordem_servico.pecas = args['pecas']
-                ordem_servico.data_inicio = args['data_inicio']
-                ordem_servico.data_termino = args['data_termino']
-                ordem_servico.responsavel = args['responsavel']
-                return ordem_servico.__dict__, 200
-        return "Ordem de serviço não encontrada", 404
+API.add_resource(Position, '/position', '/position/<int:id>', resource_class_kwargs={
+    'table_name': position['table_name'],
+    'id_column': position['id_column'],
+    'columns': position['columns']
+})
 
-    def delete(self, os_id):
-        for ordem_servico in ordens_servico:
-                if ordem_servico.id == os_id:
-                    ordens_servico.remove(ordem_servico)
-                    return "Ordem de serviço removida com sucesso", 200
-                return "Ordem de serviço não encontrada", 404
-        
-api.add_resource(OrdemServicoResource, '/ordens_servico', '/ordens_servico/<int:os_id>')
+API.add_resource(Person, '/person', '/person/<int:id>', resource_class_kwargs={
+    'table_name': person['table_name'],
+    'id_column': person['id_column'],
+    'columns': person['columns']
+})
+
+API.add_resource(Accesses, '/accesses', '/accesses/<int:id>', resource_class_kwargs={
+    'table_name': accesses['table_name'],
+    'id_column': accesses['id_column'],
+    'columns': accesses['columns']
+})
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    logging.basicConfig(format='', level=logging.INFO)
+    logging.info('Running server on port %s', PORT)
+    SERVER.safe_start()
